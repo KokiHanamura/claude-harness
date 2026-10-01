@@ -1,0 +1,18 @@
+{
+  "removed": [
+    ".claude/hooks/ensure_daily_plan.py",
+    ".claude/skills/daily-setup.md"
+  ],
+  "legacyHookCommands": [
+    "python3 .claude/hooks/ensure_daily_plan.py",
+    "afplay /System/Library/Sounds/Hero.aiff"
+  ],
+  "gitignore": [
+    ".claude/settings.local.json",
+    "CLAUDE.local.md",
+    ".claude/*.local.json",
+    ".env",
+    ".env.*",
+    "!.env.example"
+  ]
+}

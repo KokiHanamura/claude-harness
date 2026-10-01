@@ -1,0 +1,17 @@
+{
+  "commands": {
+    "test": "",
+    "lint": "",
+    "typecheck": ""
+  },
+  "postEdit": [],
+  "verifyOnStop": false,
+  "scopes": {
+    "backend": [],
+    "frontend": [],
+    "tests": ["tests/*", "test/*", "**/*_test.*", "**/*.test.*", "**/test_*.py"]
+  },
+  "protectedPaths": [],
+  "allowManagedEdits": false,
+  "notifySound": true
+}
