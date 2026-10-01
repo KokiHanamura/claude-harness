@@ -136,11 +136,6 @@ def strip_legacy(settings: dict) -> dict:
     return settings
 
 
-def render_settings(repo: Path) -> str:
-    overlay = load_json(repo / OVERLAY_REL, {}) or {}
-    return dump_json(merge(load_json(BASE_SETTINGS), overlay))
-
-
 # ---------------------------------------------------------------- registry
 
 def registry() -> list:
@@ -242,21 +237,21 @@ def sync_repo(repo: Path, dry: bool = False, force: bool = False) -> Result:
     # 4. settings.json = base + overlay. 直接編集されていたら差分を overlay に退避する
     settings_path = repo / SETTINGS_REL
     overlay_path = repo / OVERLAY_REL
+    overlay = load_json(overlay_path, {}) or {}
     if settings_path.exists() and sha(settings_path) != lock.get("settings"):
         current = strip_legacy(load_json(settings_path, {}) or {})
         extra = subtract(current, load_json(BASE_SETTINGS))
         if extra:
-            merged = merge(load_json(overlay_path, {}) or {}, extra)
+            overlay = merge(overlay, extra)
             if not dry:
-                overlay_path.write_text(dump_json(merged))
+                overlay_path.write_text(dump_json(overlay))
             res.changed.append(f"{OVERLAY_REL} (captured local settings)")
-    rendered = render_settings(repo) if not dry else None
-    if dry:
-        res.changed.append(SETTINGS_REL + " (regenerate if changed)")
-    elif not settings_path.exists() or settings_path.read_text() != rendered:
-        settings_path.parent.mkdir(parents=True, exist_ok=True)
-        settings_path.write_text(rendered)
+    rendered = dump_json(merge(load_json(BASE_SETTINGS), overlay))
+    if not settings_path.exists() or settings_path.read_text() != rendered:
         res.changed.append(SETTINGS_REL)
+        if not dry:
+            settings_path.parent.mkdir(parents=True, exist_ok=True)
+            settings_path.write_text(rendered)
 
     # 5. .gitignore
     gi = repo / ".gitignore"
@@ -268,15 +263,17 @@ def sync_repo(repo: Path, dry: bool = False, force: bool = False) -> Result:
             body = "\n".join(existing).rstrip("\n")
             gi.write_text((body + "\n\n" if body else "") + "# claude-harness\n" + "\n".join(missing) + "\n")
 
-    # 6. lock
-    if not dry:
-        (repo / LOCK_REL).write_text(dump_json({
-            "version": version(),
-            "source": str(HOME).replace(str(Path.home()), "~", 1),
-            "synced_at": _dt.datetime.now().isoformat(timespec="seconds"),
-            "settings": sha(settings_path),
-            "files": new_files,
-        }))
+    # 6. lock（同期日時以外に変化が無ければ書き換えない＝空の差分を作らない）
+    new_lock = {
+        "version": version(),
+        "source": str(HOME).replace(str(Path.home()), "~", 1),
+        "settings": sha_text(rendered),
+        "files": new_files,
+    }
+    old_core = {k: v for k, v in lock.items() if k != "synced_at"}
+    if not dry and new_lock != old_core:
+        new_lock["synced_at"] = _dt.datetime.now().isoformat(timespec="seconds")
+        (repo / LOCK_REL).write_text(dump_json(new_lock))
     res.report(dry)
     return res
 

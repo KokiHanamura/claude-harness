@@ -113,3 +113,13 @@ def test_manifest_removed_files_are_deleted(repo):
     legacy.write_text("old")
     harness.main(["init", str(repo)])
     assert not legacy.exists()
+
+
+def test_noop_sync_does_not_touch_lock_and_dry_run_is_quiet(repo, capsys):
+    harness.main(["init", str(repo)])
+    before = (repo / harness.LOCK_REL).read_text()
+    capsys.readouterr()
+    harness.main(["sync", str(repo), "--dry-run"])
+    assert "up to date" in capsys.readouterr().out
+    harness.main(["sync", str(repo)])
+    assert (repo / harness.LOCK_REL).read_text() == before
