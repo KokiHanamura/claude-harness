@@ -1,6 +1,7 @@
 {
   "repos": [
     "~/Introduction",
+    "~/fx-agent",
     "~/market-consensus",
     "~/sns-growth"
   ]
