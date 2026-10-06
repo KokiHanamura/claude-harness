@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 - 2026-10-06
+
+- 出力言語を日本語に固定
+  - `base/.claude/rules/language.md` を追加（返答・コミット・PR・ドキュメントは日本語。識別子・コマンド・エラー原文は原語のまま）
+  - `settings/base.json` に `"language": "japanese"` を追加
+
 ## 1.0.1 - 2026-10-01
 
 - 変更が無い同期で `harness.lock.json` の `synced_at` だけが書き換わり、空のコミットが生まれる問題を修正
